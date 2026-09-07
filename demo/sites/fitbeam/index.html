@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FitBeam Plus - Account &amp; Billing</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 0; background: #f4f6fb; color: #222; }
+  .topbar { background: #f97316; color: white; padding: 14px 24px; font-size: 18px; font-weight: bold; }
+  .demo-note { background: #fff3cd; border-bottom: 1px solid #ffc107; padding: 8px 24px; font-size: 13px; }
+  .wrap { max-width: 720px; margin: 28px auto; background: white; border: 1px solid #ddd; border-radius: 8px; padding: 28px 32px; }
+  h1 { font-size: 20px; margin-top: 0; }
+  .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+  .row span:first-child { color: #666; }
+  .btn { display: inline-block; margin-top: 18px; padding: 12px 22px; border: none; border-radius: 6px;
+         font-size: 15px; cursor: pointer; text-decoration: none; }
+  .btn-danger { background: #d93025; color: white; }
+  .btn-plain { background: #e8eaed; color: #333; }
+  .btn-green { background: #f97316; color: white; }
+  .ok { background: #e6f4ea; border: 1px solid #1db954; border-radius: 8px; padding: 20px; margin-top: 10px; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="topbar">FitBeam Plus</div>
+<div class="demo-note">DEMO PAGE - fictional subscription (not a real service). Used by SubShield to show safe automated cancellation.</div>
+
+<div class="wrap">
+
+  <!-- View 1: account overview -->
+  <div id="view-account">
+    <h1>Account &amp; Billing</h1>
+    <div class="row"><span>Signed in as</span><span>demo-fitbeam@example.com</span></div>
+    <div class="row"><span>Plan</span><span>FitBeam Plus (monthly)</span></div>
+    <div class="row"><span>Price</span><span>USD 12.99 / month</span></div>
+    <div class="row"><span>Next renewal</span><span>September 24, 2026</span></div>
+    <div class="row"><span>Payment method</span><span>Visa ending in 1234</span></div>
+    <p style="color:#666; font-size:14px;">Your premium benefits are active. You can cancel your subscription at any time - it stays active until the end of the current period.</p>
+    <button id="btn-start-cancel" class="btn btn-danger" onclick="show('view-retention')">Cancel subscription</button>
+  </div>
+
+  <!-- View 2: retention offer -->
+  <div id="view-retention" class="hidden">
+    <h1>We'll miss you!</h1>
+    <p style="font-size:16px;">Are you sure you want to leave? As a thank you for staying, we'd love to offer you <b>50% off your next 3 months</b>.</p>
+    <p style="color:#666; font-size:14px;">This special offer is only available right now.</p>
+    <button id="btn-keep-plan" class="btn btn-green" onclick="show('view-account')">No thanks, keep my plan</button>
+    <button id="btn-continue-cancel" class="btn btn-danger" onclick="show('view-confirm')">Continue to cancel</button>
+  </div>
+
+  <!-- View 3: final confirmation step -->
+  <div id="view-confirm" class="hidden">
+    <h1>Cancel your subscription?</h1>
+    <p>You will lose premium features on <b>September 24, 2026</b>, at the end of your current billing period. You will not be charged again after that date.</p>
+    <p style="color:#d93025; font-size:14px;"><b>This is the final step.</b> Clicking confirm permanently cancels your subscription.</p>
+    <button id="btn-confirm-cancel" class="btn btn-danger" onclick="show('view-cancelled')">Confirm cancellation</button>
+    <br>
+    <button id="btn-go-back" class="btn btn-plain" onclick="show('view-account')">Keep my subscription</button>
+  </div>
+
+  <!-- View 4: cancellation confirmed -->
+  <div id="view-cancelled" class="hidden">
+    <div class="ok">
+      <h1>&#10003; Your subscription has been cancelled</h1>
+      <p>FitBeam Plus (monthly) will remain active until <b>September 24, 2026</b> (end of current billing period).</p>
+      <p>You will <b>not be charged again</b>. No further payments will be taken from your account.</p>
+    </div>
+    <p style="color:#666; font-size:13px;">Changed your mind? You can resubscribe anytime from your account settings.</p>
+  </div>
+
+</div>
+
+<script>
+function show(id) {
+  ['view-account','view-retention','view-confirm','view-cancelled'].forEach(function(v){
+    document.getElementById(v).classList.add('hidden');
+  });
+  document.getElementById(id).classList.remove('hidden');
+  window.scrollTo(0, 0);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SubShield - Demo Dashboard</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Arial, sans-serif; margin: 0; background: #0f1220; color: #e8eaf2; }
+  header { padding: 20px 28px; background: linear-gradient(90deg, #1b2140, #141830); border-bottom: 1px solid #2a3050; }
+  header h1 { margin: 0; font-size: 22px; }
+  header p { margin: 4px 0 0; color: #9aa3c0; font-size: 13px; }
+  main { max-width: 1080px; margin: 0 auto; padding: 22px 28px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .card { background: #191e36; border: 1px solid #2a3050; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 8px; }
+  .card h2 { margin: 0; font-size: 17px; display: flex; align-items: center; gap: 8px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .row { display: flex; justify-content: space-between; font-size: 13px; color: #b6bdd6; }
+  .row b { color: #e8eaf2; }
+  .chips { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+  .chip { font-size: 12px; padding: 3px 10px; border-radius: 20px; border: 1px solid #3a4166; color: #c3caf0; background:#232a4a; }
+  .status { font-size: 12px; color:#8b93b3; min-height: 16px; white-space: pre-wrap; }
+  .err { color: #ff8a8a; }
+  .ok  { color: #7ce38b; }
+  .busy{ color: #ffd479; }
+  .btns { display: flex; gap: 10px; margin-top: auto; padding-top: 8px; }
+  button { flex: 1; border: none; border-radius: 8px; padding: 10px 0; font-size: 14px; cursor: pointer; color: white; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .cancel { background: #d93025; }
+  .keep   { background: #2469d9; }
+  .linkrow { font-size: 12px; color:#7f88ad; }
+  .linkrow a { color:#8ab4ff; text-decoration: none; }
+  section { margin-top: 26px; }
+  section h3 { font-size: 16px; border-bottom: 1px solid #2a3050; padding-bottom: 8px; }
+  .ev { display:flex; justify-content: space-between; padding: 8px 4px; border-bottom: 1px dashed #262c4a; font-size: 14px; }
+  .ev .date { color:#7ce38b; font-weight: 600; width:110px; }
+  .ev a { color:#8ab4ff; }
+  .foot { color:#5b6388; font-size: 12px; margin-top: 20px; text-align:center; }
+  .spin { display:inline-block; width:12px; height:12px; border:2px solid #555; border-top-color:#fff; border-radius:50%; animation:sp .8s linear infinite; vertical-align:middle; margin-right:6px;}
+  @keyframes sp { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<header>
+  <h1>&#128203; SubShield - Demo Dashboard</h1>
+  <p>4 fictional subscriptions on local fake sites. Cancel runs the AI agent (watch the browser). Keep just marks the renewal date. Calendar updates live below.</p>
+</header>
+<main>
+  <div class="grid" id="cards"></div>
+
+  <section>
+    <h3>&#128197; Google Calendar (auto-refreshes)</h3>
+    <div id="events"><span class="busy">loading...</span></div>
+  </section>
+
+  <p class="foot">Demo only - every service is fictional and served from 127.0.0.1. Nothing real is ever touched.</p>
+</main>
+
+<script>
+var SERVICES = __SERVICES__;
+
+function el(tag, cls, text) {
+  var e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+
+function renderCards() {
+  var wrap = document.getElementById("cards");
+  wrap.innerHTML = "";
+  SERVICES.forEach(function (s) {
+    var card = el("div", "card");
+    card.id = "card-" + s.key;
+
+    var h = el("h2");
+    var dot = el("span", "dot"); dot.style.background = s.accent;
+    h.appendChild(dot); h.appendChild(document.createTextNode(s.vendor));
+    card.appendChild(h);
+
+    card.appendChild(row("Plan", s.plan));
+    card.appendChild(row("Price", s.currency + " " + s.amount + " / month"));
+    card.appendChild(row("Renews", s.renewal_text));
+    card.appendChild(row("Reminder", "3 days before - " + isoDaysBefore(s.renewal_date)));
+
+    var chips = el("div", "chips");
+    chips.appendChild(el("span", "chip", "fake account page"));
+    chips.appendChild(el("span", "chip", "demo invoice"));
+    card.appendChild(chips);
+
+    var linkrow = el("div", "linkrow");
+    var a1 = el("a", null, "open account page"); a1.href = s.site_url; a1.target = "_blank";
+    var a2 = el("a", null, "open invoice email"); a2.href = s.invoice_url; a2.target = "_blank";
+    linkrow.appendChild(a1); linkrow.appendChild(document.createTextNode("  |  ")); linkrow.appendChild(a2);
+    card.appendChild(linkrow);
+
+    var status = el("div", "status", "idle");
+    status.id = "st-" + s.key;
+    card.appendChild(status);
+
+    var btns = el("div", "btns");
+    var bCancel = el("button", "cancel", "Cancel subscription");
+    bCancel.onclick = function () { action(s.key, "cancel"); };
+    var bKeep = el("button", "keep", "Keep (mark renewal)");
+    bKeep.onclick = function () { action(s.key, "keep"); };
+    btns.appendChild(bCancel); btns.appendChild(bKeep);
+    card.appendChild(btns);
+
+    wrap.appendChild(card);
+  });
+}
+
+function row(k, v) {
+  var r = el("div", "row");
+  r.appendChild(el("span", null, k));
+  var b = el("b", null, v); r.appendChild(b);
+  return r;
+}
+
+function isoDaysBefore(iso) {
+  var d = new Date(iso + "T00:00:00");
+  d.setDate(d.getDate() - 3);
+  return d.toISOString().slice(0, 10);
+}
+
+function action(key, kind) {
+  var label = kind === "cancel"
+    ? "Run the AI agent and actually CANCEL this (fake-site) subscription?"
+    : "Keep the subscription and just mark the renewal date in Google Calendar?";
+  if (!confirm(label + "  (" + key + ")")) return;
+  fetch("/api/" + kind + "/" + key, { method: "POST" })
+    .then(function (r) { return r.json(); })
+    .then(function (j) {
+      if (!j.ok) alert(j.message || "failed");
+    })
+    .catch(function () { alert("request failed"); });
+}
+
+function setStatus(key, st) {
+  var box = document.getElementById("st-" + key);
+  if (!box) return;
+  var t = "";
+  if (st.state === "running") { t = "\u23f3 " + (st.step || "working..."); box.className = "status busy"; }
+  else if (st.state === "done") {
+    t = "\u2713 finished";
+    if (st.agent_status) t += " | agent: " + st.agent_status + " (" + (st.screenshots || 0) + " screenshots)";
+    box.className = "status ok";
+  }
+  else if (st.state === "kept") { t = "\u2713 renewal marked in calendar"; box.className = "status ok"; }
+  else if (st.state === "error") { t = "\u2717 " + (st.error || "failed"); box.className = "status err"; }
+  else { t = "idle"; box.className = "status"; }
+  box.textContent = t;
+  var card = document.getElementById("card-" + key);
+  if (card) {
+    var bs = card.querySelectorAll("button");
+    var busy = st.state === "running";
+    bs[0].disabled = busy; bs[1].disabled = busy;
+  }
+}
+
+function poll() {
+  fetch("/api/status").then(function (r) { return r.json(); }).then(function (j) {
+    SERVICES.forEach(function (s) { setStatus(s.key, j.services[s.key] || { state: "idle" }); });
+  }).catch(function () {});
+  fetch("/api/events").then(function (r) { return r.json(); }).then(function (j) {
+    var box = document.getElementById("events");
+    if (!j.configured) { box.innerHTML = ""; box.appendChild(el("div", "status", "Calendar not configured yet - reminders will still be created once credentials.json is set.")); return; }
+    box.innerHTML = "";
+    if (!j.events.length) box.appendChild(el("div", "status", "No upcoming SubShield events."));
+    j.events.forEach(function (e) {
+      var d = el("div", "ev");
+      d.appendChild(el("span", "date", e.date));
+      var mid = el("span", null, e.summary);
+      d.appendChild(mid);
+      var a = el("a", null, "open"); a.href = e.link; a.target = "_blank";
+      d.appendChild(a);
+      box.appendChild(d);
+    });
+  }).catch(function () {});
+}
+
+renderCards();
+poll();
+setInterval(poll, 2500);
+</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+# SubShield runtime dependencies — all free / open source.
+#
+# Versions below are the ones this codebase was developed and tested against
+# (Python 3.12, Windows). browser-use changes its API across minor releases,
+# so keep it pinned and upgrade deliberately.
+#
+# NOTE: the email parser's PyPI name is `mail-parser` (imports as `mailparser`).
+
+browser-use==0.13.10
+playwright==1.62.0
+pdfplumber==0.11.10
+mail-parser==4.6.4
+google-genai==1.65.0
+google-api-python-client==2.188.0
+google-auth-httplib2==0.4.2
+google-auth-oauthlib==1.2.4
+python-dotenv==1.2.2
+# openai is pinned by browser-use; also used for the NVIDIA NIM backend
+# (`LLM_PROVIDER=nvidia`) via browser-use's own ChatOpenAI class.
+openai==2.26.0

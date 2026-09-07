@@ -1,0 +1,30 @@
+# ── Secrets — never commit these ─────────────────────────────
+.env
+.env.local
+credentials.json
+credentials.json.*
+token.json
+*_token.json
+*.pem
+*.key
+*.secret
+
+# ── Runtime artifacts ────────────────────────────────────────
+runs/
+*.log
+
+# ── Python ───────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ── OS / editor ──────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
