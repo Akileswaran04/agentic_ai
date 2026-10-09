@@ -138,42 +138,40 @@ def _confirm_fields(info: SubscriptionInfo, *, can_rerun: bool, rerun) -> Subscr
         print("  Please answer y, e" + (", r" if can_rerun else "") + ".")
 
 
-def _prompt_event() -> tuple[str, date, int] | None:
-    """Collect and confirm a simple all-day calendar event from the terminal."""
-    print("\nEnter calendar event details:")
-    title = input("  Event name: ").strip()
-    if not title:
-        print("  [cancelled] Event name cannot be empty.")
-        return None
-
+def _prompt_date(label: str) -> date:
     while True:
-        raw_date = input("  Start date (YYYY-MM-DD): ").strip()
+        raw = input(f"  {label} (YYYY-MM-DD): ").strip()
         try:
-            start_date = date.fromisoformat(raw_date)
-            break
+            return date.fromisoformat(raw)
         except ValueError:
             print("  [warn] Use a valid date in YYYY-MM-DD format.")
 
-    while True:
-        raw_duration = input("  Duration in days (e.g. 1): ").strip()
-        try:
-            duration_days = int(raw_duration)
-            if duration_days < 1:
-                raise ValueError
-            break
-        except ValueError:
-            print("  [warn] Duration must be a whole number of at least 1 day.")
 
-    end_date = start_date.fromordinal(start_date.toordinal() + duration_days - 1)
+def _prompt_event() -> tuple[str, date, date] | None:
+    """Collect and confirm a subscription's start/end dates from the terminal."""
+    print("\nEnter subscription details:")
+    title = input("  Subscription name: ").strip()
+    if not title:
+        print("  [cancelled] Subscription name cannot be empty.")
+        return None
+
+    start_date = _prompt_date("Start date")
+    while True:
+        end_date = _prompt_date("End date")
+        if end_date >= start_date:
+            break
+        print("  [warn] End date must be on or after the start date.")
+
     print("\n  Review event:")
-    print(f"    Name     : {title}")
-    print(f"    Calendar date: {end_date.isoformat()} (all-day)")
-    print(f"    Duration : {duration_days} day(s)")
+    print(f"    Name       : {title}")
+    print(f"    Start date : {start_date.isoformat()}")
+    print(f"    End date   : {end_date.isoformat()}")
+    print(f"    Duration   : {(end_date - start_date).days + 1} day(s)")
     choice = input("\n  Accept and add to Google Calendar? [a]ccept/[r]eject: ").strip().lower()
     if choice not in {"a", "accept", "y", "yes"}:
         print("  [rejected] No calendar event was created.")
         return None
-    return title, start_date, duration_days
+    return title, start_date, end_date
 
 
 def run_event_entry(*, dry_run: bool) -> int:
@@ -183,9 +181,9 @@ def run_event_entry(*, dry_run: bool) -> int:
     if event is None:
         return 0
 
-    title, start_date, duration_days = event
+    title, start_date, end_date = event
     try:
-        create_calendar_event(title, start_date, duration_days, dry_run=dry_run)
+        create_calendar_event(title, start_date, end_date, dry_run=dry_run)
     except (CalendarNotConfigured, ValueError) as exc:
         print(f"\n  [error] {exc}")
         return 1

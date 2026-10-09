@@ -91,14 +91,17 @@ def _service():
         raise CalendarNotConfigured(f"Calendar authentication failed: {exc}") from exc
 
 
-def build_calendar_event(title: str, start_date: date, duration_days: int) -> dict[str, Any]:
-    """Build a one-day event on the calculated end date."""
-    event_date = start_date + timedelta(days=duration_days - 1)
+def build_calendar_event(title: str, start_date: date, end_date: date) -> dict[str, Any]:
+    """Build an all-day event spanning start_date..end_date (inclusive)."""
     return {
         "summary": title,
-        "description": f"Created by SubShield terminal event entry.\nDate: {event_date.isoformat()}",
-        "start": {"date": event_date.isoformat()},
-        "end": {"date": (event_date + timedelta(days=1)).isoformat()},
+        "description": (
+            "Created by SubShield terminal event entry.\n"
+            f"Subscription: {start_date.isoformat()} to {end_date.isoformat()}"
+        ),
+        "start": {"date": start_date.isoformat()},
+        # Google's all-day end date is exclusive.
+        "end": {"date": (end_date + timedelta(days=1)).isoformat()},
         "transparency": "transparent",
         "reminders": {"useDefault": True},
     }
@@ -107,23 +110,21 @@ def build_calendar_event(title: str, start_date: date, duration_days: int) -> di
 def create_calendar_event(
     title: str,
     start_date: date,
-    duration_days: int,
+    end_date: date,
     *,
     dry_run: bool = False,
 ) -> dict[str, Any] | None:
     """Create a user-entered all-day event after the caller confirms it."""
-    if duration_days < 1:
-        raise ValueError("duration_days must be at least 1")
+    if end_date < start_date:
+        raise ValueError("end_date must be on or after start_date")
 
-    event = build_calendar_event(title, start_date, duration_days)
+    event = build_calendar_event(title, start_date, end_date)
     calendar_id = _calendar_id()
-    event_date = start_date + timedelta(days=duration_days - 1)
 
     if dry_run:
         print("\n  [dry-run] Would create this Google Calendar event:")
         print(f"    Title      : {title}")
-        print(f"    Date       : {event_date.isoformat()} (all-day)")
-        print(f"    Duration   : {duration_days} day(s)")
+        print(f"    Dates      : {start_date.isoformat()} to {end_date.isoformat()} (all-day)")
         print(f"    Calendar   : {calendar_id}")
         return None
 

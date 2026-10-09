@@ -107,9 +107,9 @@ python main.py --input invoice.pdf --auto-confirm                  # skip the ap
 python main.py --input invoice.pdf --no-llm                        # force manual fields
 ```
 
-With `--event`, enter the event name, start date (`YYYY-MM-DD`), and duration in
-days. The details are shown for review; choose `accept` to add one all-day event
-on the calculated end date, or `reject` to exit without creating anything. Add
+With `--event`, enter the subscription name, start date and end date (`YYYY-MM-DD`).
+The details are shown for review; choose `accept` to add one all-day event spanning
+start to end, or `reject` to exit without creating anything. Add
 `--dry-run` to preview the Calendar payload without inserting it.
 
 ### What happens on a normal run
